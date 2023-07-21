@@ -11,7 +11,7 @@ execute:
 #| label: setup
 #| include: false
 
-set.seed(1234)
+set.seed(123)
 
 # load pkgs
 pacman::p_load(plyr, lubridate, tidyverse, readxl, plotly, DT)
@@ -46,15 +46,15 @@ Number of questions in survey: `r length(survey) - n_vars_noq`.
 
 Note, the survey questions were updated in December 2020, so there are some inconsistencies between the current and old versions. `r round(100 * (nrow(survey %>% filter(survey_version == 'Old-2020')) / nrow(survey)), 1)`% of responses are from the old version.  
 
-## Limitations
+## CAUTION: Interpretation Limitations
 
-Approximately 130,000 HEiDi encounters have occurred over the same time period that the survey has been open. This reflects an estimated response rate of `r round(100 * nrow(survey)/130000, 1)`%. Given the extremely low response rate, all survey results should be interpreted cautiously.  
+Approximately 130,000 HEiDi encounters have occurred over the same time period that the survey has been open. **This reflects an estimated response rate of `r round(100 * nrow(survey)/130000, 1)`%.** Given the extremely low response rate, all survey results should be interpreted cautiously.  
 
 # Responses Collected Over Time
 
 ```{r}
 #| label: fig-responses-over-time
-#| fig-cap: "Responses collected over time."
+#| fig-cap: "Responses collected per month."
 
 # add var for month-year
 survey <- survey %>% mutate(year_month = round_date(survey_date, unit = 'month'))
@@ -464,11 +464,13 @@ ggplotly(fig_bin_rating)
 ```{r}
 #| include: false
 
-comments <- survey %>% select(`Submission ID`, comments = `Is there any feedback you would like to share to help us improve future callers' experience with the HealthLink BC 8-1-1 Virtual Physician Service? Please enter any additional comments. Your feedback is important to us.`) %>% filter(!is.na(comments))
+comments <- survey %>% select(`Submission ID`, comments = `Is there any feedback you would like to share to help us improve future callers' experience with the HealthLink BC 8-1-1 Virtual Physician Service? Please enter any additional comments. Your feedback is important to us.`) %>% filter(!is.na(comments)) %>% 
+  ## truncate comments to 200 characters
+  mutate(comments = str_trunc(comments, 300, 'right'))
 
 ```
 
-Respondents entered `r length(comments$comments)` comments. The two tables below show 20 random quotes stratified by whether their satisfaction ratings were positive or negative using the above binning method.  
+Respondents entered `r length(comments$comments)` comments. The two tables below show 20 random quotes stratified by whether their satisfaction ratings were positive or negative using the above binning method. For very long comments, they have been truncated to the first 300 characters.  
 
 ```{r}
 
