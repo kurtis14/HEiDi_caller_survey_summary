@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Summary of Survey Responses",
+    "section": "",
+    "text": "HEiDi callers are emailed a link to the survey along with the information for their encounter. The survey is anonymous, optional, and survey is completed online using HLBC’s survey platform.\nDate of first response received: 2020-06-04.\nDate of most recent response received: 2023-06-30.\nTotal responses received: 4148.\nNumber of questions in survey: 23.\nNote, the survey questions were updated in December 2020, so there are some inconsistencies between the current and old versions. 27.1% of responses are from the old version.\n\n\nApproximately 130,000 HEiDi encounters have occurred over the same time period that the survey has been open. This reflects an estimated response rate of 3.2%. Given the extremely low response rate, all survey results should be interpreted cautiously."
+  },
+  {
+    "objectID": "index.html#intended-care-actions",
+    "href": "index.html#intended-care-actions",
+    "title": "Summary of Survey Responses",
+    "section": "Intended Care Actions",
+    "text": "Intended Care Actions\nFor the two following questions, respondents have the option to select pre-defined options or to write in their own. Any values with less than 10 occurrences have been censored.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nLinking Pre/Post Intentions\nThe figure only includes the 10 most frequent pre/post options.\n\n\n\n\n\nFigure 3: Sankey diagram of callers’ pre- and post-encounter intended actions."
+  },
+  {
+    "objectID": "index.html#following-heidi-recommendation",
+    "href": "index.html#following-heidi-recommendation",
+    "title": "Summary of Survey Responses",
+    "section": "Following HEiDi Recommendation",
+    "text": "Following HEiDi Recommendation"
+  },
+  {
+    "objectID": "index.html#what-is-most-important-to-caller",
+    "href": "index.html#what-is-most-important-to-caller",
+    "title": "Summary of Survey Responses",
+    "section": "What is Most Important to Caller",
+    "text": "What is Most Important to Caller\nCallers are able to select multiple pre-defined options or write their own response. Note: the denominator of the percentage in the table is the sum of all available non-blank/-missing responses (not respondents)."
+  },
+  {
+    "objectID": "index.html#post-call-feeling",
+    "href": "index.html#post-call-feeling",
+    "title": "Summary of Survey Responses",
+    "section": "Post-Call Feeling",
+    "text": "Post-Call Feeling"
+  },
+  {
+    "objectID": "index.html#overall-help",
+    "href": "index.html#overall-help",
+    "title": "Summary of Survey Responses",
+    "section": "Overall Help",
+    "text": "Overall Help\nNote: this question was added in March 2022, so there are limited responses available. Any values with less than 10 occurrences have been censored.\n\n\n\n\n\nFigure 4: Percentage of responses for overall help question."
+  },
+  {
+    "objectID": "index.html#treated-with-respect",
+    "href": "index.html#treated-with-respect",
+    "title": "Summary of Survey Responses",
+    "section": "Treated with Respect",
+    "text": "Treated with Respect\nNote: this question was added in March 2022, so there are limited responses available. Any values with less than 10 occurrences have been censored.\n\n\n\n\n\nFigure 5: Percentage of responses for respect question."
+  },
+  {
+    "objectID": "index.html#additional-ratings",
+    "href": "index.html#additional-ratings",
+    "title": "Summary of Survey Responses",
+    "section": "Additional Ratings",
+    "text": "Additional Ratings\nRespondents are asked a further 7 satisfaction questions on a 1-5 scale.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSummary Table"
+  },
+  {
+    "objectID": "index.html#satisfaction-over-time",
+    "href": "index.html#satisfaction-over-time",
+    "title": "Summary of Survey Responses",
+    "section": "Satisfaction Over Time",
+    "text": "Satisfaction Over Time\nFor the 7 satisfaction questions above, the responses were binned into positive, neutral, and negative, then averaged across all questions answered for each respondent. This outputted a rating between 1 and -1, where 1 indicates that the respondent answered all questions as positively as possible. These ratings were averaged by month. The blue line overlaid on the bars indicates the trend line."
+  },
+  {
+    "objectID": "index.html#comments-from-2022",
+    "href": "index.html#comments-from-2022",
+    "title": "Summary of Survey Responses",
+    "section": "Comments from 2022",
+    "text": "Comments from 2022\nThe comments below are from June and August 2022 when the satisfaction ratings were lowest."
+  }
+]
