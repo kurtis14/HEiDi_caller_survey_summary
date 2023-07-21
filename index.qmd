@@ -500,7 +500,7 @@ The comments below are from June and August 2022 when the satisfaction ratings w
 left_join(comments, rating_binned) %>% 
   filter(year_month %in% c(date('2022-06-01'), date('2022-08-01'))) %>% 
   sample_n(5) %>% 
-  select(Comment = comments) %>% 
+  select(Comments = comments) %>% 
   datatable(options = list(dom = 't'))
 
 ```

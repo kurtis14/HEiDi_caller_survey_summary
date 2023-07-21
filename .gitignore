@@ -4,6 +4,7 @@
 .Ruserdata
 
 /.quarto/
+/_site/
 
 # personal path script
 set-filepath.R
