@@ -1,0 +1,506 @@
+---
+title: "Summary of Survey Responses"
+editor_options: 
+  chunk_output_type: console
+execute: 
+  echo: false
+  warning: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+set.seed(1234)
+
+# load pkgs
+pacman::p_load(plyr, lubridate, tidyverse, readxl, plotly, DT)
+
+# set file path to sharepoint
+source('set-filepath.R')
+path
+
+# read in survey data
+survey <- read_csv(paste0(path, 'HLBC/HEiDi/caller_survey/02_derived/HEiDi_caller-survey-clean.csv'))
+
+# var names -- 5 vars are metadata or derived
+names(survey)
+n_vars_noq <- 5
+
+# set plot theme
+theme_set(theme_classic() + theme(text = element_text(size = 14)))
+
+# helper function
+count_perc <- function(n) { round(100 * (n / sum(n)), 1) }
+
+```
+
+# Survey Details/Notes
+
+HEiDi callers are emailed a link to the survey along with the information for their encounter. The survey is anonymous, optional, and survey is completed online using HLBC's survey platform.  
+
+Date of first response received: `r min(survey$survey_date)`.  
+Date of most recent response received: `r max(survey$survey_date)`.  
+Total responses received: `r nrow(survey)`.  
+Number of questions in survey: `r length(survey) - n_vars_noq`.  
+
+Note, the survey questions were updated in December 2020, so there are some inconsistencies between the current and old versions. `r round(100 * (nrow(survey %>% filter(survey_version == 'Old-2020')) / nrow(survey)), 1)`% of responses are from the old version.  
+
+## Limitations
+
+Approximately 130,000 HEiDi encounters have occurred over the same time period that the survey has been open. This reflects an estimated response rate of `r round(100 * nrow(survey)/130000, 1)`%. Given the extremely low response rate, all survey results should be interpreted cautiously.  
+
+# Responses Collected Over Time
+
+```{r}
+#| label: fig-responses-over-time
+#| fig-cap: "Responses collected over time."
+
+# add var for month-year
+survey <- survey %>% mutate(year_month = round_date(survey_date, unit = 'month'))
+
+fig_count_year_month <- survey %>% count(year_month) %>% 
+  ggplot(aes(x = year_month, y = n, fill = n)) + geom_col(colour = 'black') +
+  xlab('') + ylab('Number of responses') +
+  scale_y_continuous(expand = c(0, 0)) + 
+  theme(legend.position = 'none')
+ggplotly(fig_count_year_month)
+
+```
+
+# Respondent Types
+
+```{r}
+#| label: tbl-respondents
+#| tbl-cap: "Count of respondent type."
+
+survey %>% count(`Are you completing this survey for yourself, for someone else (such as a family member) or a person you care for? Please select the option that applies.`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Are you completing this survey for yourself, for someone else (such as a family member) or a person you care for? Please select the option that applies.` = ifelse(is.na(`Are you completing this survey for yourself, for someone else (such as a family member) or a person you care for? Please select the option that applies.`), '[missing]', `Are you completing this survey for yourself, for someone else (such as a family member) or a person you care for? Please select the option that applies.`)) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+# Attachment
+
+In the survey, respondents have the option to select an option *and* add further information. The additional text information is censored here due to high variability and risk of PII disclosure.  
+
+```{r}
+#| label: tbl-attachment
+#| tbl-cap: "Count of respondent-reported attachment status."
+
+survey %>% count(attachment, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(attachment = ifelse(is.na(attachment), '[missing]', attachment)) %>% 
+  rename(`Attached?` = attachment) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+# Usual Care
+
+Respondents are asked where they usually receive care. Respondents have the option to write their own care option - any responses that have less than 10 occurrences are censored.  
+
+```{r}
+#| label: tbl-usual-care
+#| tbl-cap: "Count of where respondents usually receive care."
+
+survey %>% count(`Where do you usually get care?`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Where do you usually get care?` = ifelse(is.na(`Where do you usually get care?`), '[missing]', `Where do you usually get care?`)) %>% 
+  filter(count >= 10) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+# COVID-19 Calls
+
+```{r}
+#| label: tbl-covid
+#| tbl-cap: "Count of COVID-19-related calls."
+
+survey %>% count(`Was your call to HealthLink BC 8-1-1 about COVID-19?`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Was your call to HealthLink BC 8-1-1 about COVID-19?` = ifelse(is.na(`Was your call to HealthLink BC 8-1-1 about COVID-19?`), '[missing]', `Was your call to HealthLink BC 8-1-1 about COVID-19?`)) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+<br><br>  
+```{r}
+#| label: fig-covid
+#| fig-cap: "Count and percentage of COVID-related calls over time."
+
+fig_covid <- survey %>% count(`Was your call to HealthLink BC 8-1-1 about COVID-19?`, year_month, name = 'Count') %>% 
+  group_by(year_month) %>% 
+  mutate(Percent = 100 * Count / sum(Count)) %>% 
+  gather(type, value, -year_month, -`Was your call to HealthLink BC 8-1-1 about COVID-19?`) %>% 
+  mutate(`Was your call to HealthLink BC 8-1-1 about COVID-19?` = str_wrap(`Was your call to HealthLink BC 8-1-1 about COVID-19?`, width = 30)) %>% 
+  ggplot(aes(x = year_month, y = value, fill = `Was your call to HealthLink BC 8-1-1 about COVID-19?`)) +
+  geom_col() + facet_wrap(~ type, scales = 'free') +
+  xlab('') + ylab('') + labs(fill = '') +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(legend.position = 'top')
+ggplotly(fig_covid) %>% 
+  layout(legend = list(orientation = "h", x = 0, y = -0.1))
+
+```
+
+# Planning Care: Pre-/Post-HEiDi Call
+
+## Intended Care Actions
+
+For the two following questions, respondents have the option to select pre-defined options or to write in their own. Any values with less than 10 occurrences have been censored.
+
+```{r}
+
+survey %>% count(`Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?` = ifelse(is.na(`Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?`), '[missing]', `Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?`)) %>% 
+  filter(count >= 10) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+<br>  
+```{r}
+
+survey %>% count(`Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?` = ifelse(is.na(`Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?`), '[missing]', `Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?`)) %>% 
+  filter(count >= 10) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+### Linking Pre/Post Intentions
+
+The figure only includes the 10 most frequent pre/post options.  
+
+```{r}
+#| label: sankey-prep
+#| include: false
+
+# quick count
+survey %>% count(`Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?`, `Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?`)
+
+# generate links
+links <- survey %>% 
+    count(`Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?`, `Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?`, sort = T) %>% 
+    rename(source = `Before you spoke with the HealthLink BC 8-1-1 Virtual Physician, what was your plan for seeking healthcare?`, target = `Now that you have spoken with the HealthLink BC 8-1-1 Virtual Physician, what are you planning to do next?`, value = n) %>% 
+  mutate(source = paste0('source_', source),
+         target = paste0('target_', target))
+
+# remove missing values and only keep 10 most frequent pairings
+links <- links %>% filter(!is.na(source) & !is.na(target)) %>% 
+  arrange(desc(value)) %>% slice(1:10)
+links %>% distinct(source)
+links %>% distinct(target)
+
+# create df of nodes
+nodes <- data.frame(name = c(as.character(links$source),
+                             as.character(links$target)) %>% unique())
+
+# update link sources/targets
+links$IDsource <- match(links$source, nodes$name)-1
+links$IDtarget <- match(links$target, nodes$name)-1
+
+```
+
+```{r}
+#| label: fig-sankey
+#| fig-cap: "Sankey diagram of callers' pre- and post-encounter intended actions."
+
+### with plotly
+plotly::plot_ly(type = "sankey", orientation = "h",
+  node = list(
+    label = nodes$name, pad = 10, thickness = 30,
+    color = c('grey', 'yellow', 'green', 'red', 
+              'grey', 'yellow', 'green', 'red'),
+    line = list(color = "black",width = 1),
+    hovertemplate = "%{label}"
+  ),
+  link = list(
+    source = links$IDsource, target = links$IDtarget,
+    value =  links$value
+    )
+  )
+
+```
+
+## Following HEiDi Recommendation
+
+```{r}
+
+survey %>% count(`Do you plan to take the action recommended by the HealthLink BC 8-1-1 Virtual Physician?`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Do you plan to take the action recommended by the HealthLink BC 8-1-1 Virtual Physician?` = ifelse(is.na(`Do you plan to take the action recommended by the HealthLink BC 8-1-1 Virtual Physician?`), '[missing]', `Do you plan to take the action recommended by the HealthLink BC 8-1-1 Virtual Physician?`)) %>% 
+  filter(count >= 10) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+<br>  
+```{r}
+
+survey %>% count(`Before the end of your consultation, did the 8-1-1 Virtual Physician help you arrange any follow-up care or additional services you needed?`, sort = T, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Before the end of your consultation, did the 8-1-1 Virtual Physician help you arrange any follow-up care or additional services you needed?` = ifelse(is.na(`Before the end of your consultation, did the 8-1-1 Virtual Physician help you arrange any follow-up care or additional services you needed?`), '[missing]', `Before the end of your consultation, did the 8-1-1 Virtual Physician help you arrange any follow-up care or additional services you needed?`)) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+## What is Most Important to Caller
+
+Callers are able to select multiple pre-defined options or write their own response. Note: the denominator of the percentage in the table is the sum of all available non-blank/-missing responses (not respondents).  
+
+```{r}
+
+most_import <- as_tibble(str_split(survey$`What is most important to you right now? Please check all that apply.`, ';', simplify = T))
+most_import %>% gather(k, v) %>% 
+  # mutate(v = str_trim(v), v = tolower(v)) %>% 
+  filter(v != '') %>% 
+  # filter(!is.na(v)) %>%
+  filter(!grepl('SYSTEM:Checkbox', v)) %>% 
+  count(v, sort = T, name = 'count') %>%
+  mutate(percent = count_perc(count)) %>% 
+  filter(count >= 10) %>% 
+  rename(`What is most important to you right now? Please check all that apply.` = v) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+## Post-Call Feeling
+
+```{r}
+
+survey %>% count(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:`, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:` = ifelse(is.na(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:`), '[missing]', `Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:`)) %>% 
+  mutate(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:` = ifelse(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:` == '5', '5 - much better', `Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:`)) %>% 
+  mutate(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:` = ifelse(`Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:` == '1', '1 - more anxious', `Compare how you felt before you spoke to the HealthLink BC 8-1-1 Virtual Physician to how you feel now that you have spoken to the Virtual Physician:`)) %>% 
+  filter(count >= 10) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+# Video Use
+
+```{r}
+
+survey %>% count(`Did you use video when speaking with the HealthLink BC 8-1-1 Virtual Physician?`, name = 'count') %>% 
+  mutate(percent = count_perc(count)) %>% 
+  mutate(`Did you use video when speaking with the HealthLink BC 8-1-1 Virtual Physician?` = ifelse(is.na(`Did you use video when speaking with the HealthLink BC 8-1-1 Virtual Physician?`), '[missing]', `Did you use video when speaking with the HealthLink BC 8-1-1 Virtual Physician?`)) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+# Satisfaction Ratings
+
+## Overall Help
+
+Note: this question was added in March 2022, so there are limited responses available. Any values with less than 10 occurrences have been censored.  
+
+```{r}
+#| label: fig-overall-help
+#| fig-cap: "Percentage of responses for overall help question."
+
+# 0 = not helped at all; 10 = helped completely
+
+fig_help <- survey %>% select(help = `Overall, do you feel that you were helped by your 8-1-1 Virtual Physician consultation?`) %>% 
+  count(help) %>% filter(n >= 10) %>% 
+  mutate(help_num = help, 
+         help = ifelse(is.na(help), '[missing]', help),
+         help = ifelse(help == '0', '0 - not at all', help),
+         help = ifelse(help == '10', '10 - completely', help),
+         percent = count_perc(n),
+         help = fct_reorder(help, help_num)) %>% 
+  ggplot(aes(x = help, y = percent, fill = help)) +
+  geom_col() + 
+  labs(title = str_wrap('Overall, do you feel that you were helped by your 8-1-1 Virtual Physician consultation?', 50)) +
+  xlab('') + ylab('Percentage of responses') +
+  theme(legend.position = 'none') +
+  scale_y_continuous(expand = c(0, 0)) + 
+  coord_flip()
+ggplotly(fig_help)
+
+```
+
+## Treated with Respect
+
+Note: this question was added in March 2022, so there are limited responses available. Any values with less than 10 occurrences have been censored.  
+
+```{r}
+#| label: fig-respect
+#| fig-cap: "Percentage of responses for respect question."
+
+fig_respect <- survey %>% select(respect = `During your 8-1-1 Virtual Physician consultation, did you feel that you were treated with respect?`) %>% 
+  count(respect) %>% filter(n >= 10) %>% 
+  mutate(percent = count_perc(n),
+         respect = ifelse(is.na(respect), '[missing]', respect)) %>% 
+  ggplot(aes(x = respect, y = percent, fill = respect)) +
+  geom_col() + 
+  labs(title = str_wrap('During your 8-1-1 Virtual Physician consultation, did you feel that you were treated with respect?', 40)) +
+  xlab('') + ylab('Percentage of responses') +
+  theme(legend.position = 'none') +
+  scale_y_continuous(expand = c(0, 0)) + 
+  coord_flip()
+ggplotly(fig_respect)
+
+```
+
+## Additional Ratings
+
+```{r}
+#| include: false
+
+# 1-5 rating vars
+lapply(survey %>% select(`The consultation process was easy and worked well.`:`Overall, I was satisfied with the HealthLink BC 8-1-1 Virtual Physician service.`) %>%
+  select(-`Did you use video when speaking with the HealthLink BC 8-1-1 Virtual Physician?`,
+         -`During your 8-1-1 Virtual Physician consultation, did you feel that you were treated with respect?`),
+  function(x) unique(x))
+
+rating_vars <- survey %>% select(`The consultation process was easy and worked well.`:`Overall, I was satisfied with the HealthLink BC 8-1-1 Virtual Physician service.`) %>%
+  select(-`Did you use video when speaking with the HealthLink BC 8-1-1 Virtual Physician?`,
+         -`During your 8-1-1 Virtual Physician consultation, did you feel that you were treated with respect?`) %>% 
+  names()
+
+rating_vars
+survey %>% select(any_of(rating_vars)) %>% summary()
+
+# for each var, summarize values and plot -- prep function
+fig_rating_fn <- function(var) {
+  data <- survey %>% select(value = any_of(var)) %>% 
+    count(value) %>% 
+    mutate(percent = count_perc(n),
+           value = ifelse(is.na(value), '[missing]', value),
+           value = ifelse(value == '1', '1 - strongly disagree', value),
+           value = ifelse(value == '5', '5 - strongly agree', value),
+           value = str_wrap(value, 20),
+           title = var) %>% 
+    filter(n >= 10)
+  mytitle <- str_wrap(unique(data$title), 40)
+  fig <- ggplot(data, aes(x = value, y = percent, fill = value)) +
+    geom_col() + xlab('') + ylab('Percentage of responses') +
+    labs(title = mytitle) +
+    scale_y_continuous(expand = c(0, 0), limits = c(0, max(data$percent) + 5)) +
+    theme(legend.position = 'none')
+  ggplotly(fig)
+}
+
+# loop over variables to prep figures
+fig_list <- map(rating_vars, fig_rating_fn)
+fig_df <- tibble(rate = rating_vars, plots = fig_list)
+
+```
+
+Respondents are asked a further `r length(rating_vars)` satisfaction questions on a 1-5 scale.  
+
+```{r}
+#| output: asis
+
+# output figures in doc
+
+res <- pmap_chr(fig_df, \(rate, plots) {
+  knitr::knit_child(text = c(
+    "```{r}",
+    "#| echo: false",
+    "plots",
+    "```",
+    ""), envir = environment(), quiet = TRUE)
+})
+cat(res, sep = '\n')
+
+```
+
+### Summary Table
+
+```{r}
+#| label: summary-table-satisfaction
+
+survey %>% select(any_of(rating_vars)) %>% 
+  gather(var, value) %>% group_by(var) %>% 
+  count(value, name = 'count') %>% 
+  mutate(percent = count_perc(count),
+         value = ifelse(is.na(value), '[missing]', value),
+         value = ifelse(value == '1', '1 - strongly disagree', value),
+         value = ifelse(value == '5', '5 - strongly agree', value),
+         cell = paste0(count, ' (', round(percent, 1), '%)')) %>% 
+  select(var, value, cell) %>% 
+  spread(value, cell) %>% 
+  rename(Question = var) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+## Satisfaction Over Time
+
+For the `r length(rating_vars)` satisfaction questions above, the responses were binned into positive, neutral, and negative, then averaged across all questions answered for each respondent. This outputted a rating between 1 and -1, where 1 indicates that the respondent answered all questions as positively as possible. These ratings were averaged by month. The blue line overlaid on the bars indicates the trend line.  
+
+```{r}
+
+rating_binned <- survey %>% select(`Submission ID`, all_of(rating_vars)) %>% 
+  gather(var, value, -`Submission ID`) %>% 
+  mutate(value_bin = case_when(value >= 4 ~ 1, value == 3 ~ 0,
+                           value <= 2 ~ -1, is.na(value) ~ NA_real_)) %>% 
+  group_by(`Submission ID`) %>% 
+  summarise(total = mean(value_bin, na.rm = TRUE)) %>% ungroup() %>% 
+  left_join(., survey %>% select(`Submission ID`, year_month))
+
+fig_bin_rating <- rating_binned %>% 
+  group_by(year_month) %>% summarise(mean_total = mean(total, na.rm = T)) %>% 
+  ggplot(aes(x = year_month, y = mean_total, fill = mean_total)) +
+  geom_col(colour = 'black') + 
+  scale_y_continuous(limits = c(-0.25, 1), expand = c(0, 0)) +
+  scale_fill_gradient(low = 'darkgreen', high = 'green') +
+  geom_smooth() +
+  geom_hline(yintercept = 0, colour = 'red', size = 1) +
+  xlab('') + ylab('Mean binned rating') +
+  theme(legend.position = 'none')
+
+ggplotly(fig_bin_rating)
+
+```
+
+# Comments
+
+```{r}
+#| include: false
+
+comments <- survey %>% select(`Submission ID`, comments = `Is there any feedback you would like to share to help us improve future callers' experience with the HealthLink BC 8-1-1 Virtual Physician Service? Please enter any additional comments. Your feedback is important to us.`) %>% filter(!is.na(comments))
+
+```
+
+Respondents entered `r length(comments$comments)` comments. The two tables below show 20 random quotes stratified by whether their satisfaction ratings were positive or negative using the above binning method.  
+
+```{r}
+
+# positive comments
+left_join(comments, rating_binned) %>% 
+  filter(total == 1) %>% sample_n(10) %>% 
+  select(`Positive comments` = comments) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+<br>  
+```{r}
+
+# negative comments
+left_join(comments, rating_binned) %>% 
+  filter(total < -0.5) %>% sample_n(10) %>% 
+  select(`Negative comments` = comments) %>% 
+  datatable(options = list(dom = 't'))
+
+```
+
+## Comments from 2022
+
+The comments below are from June and August 2022 when the satisfaction ratings were lowest.  
+
+```{r}
+
+# comments from June/August 2022 when satisfaction was lowest
+left_join(comments, rating_binned) %>% 
+  filter(year_month %in% c(date('2022-06-01'), date('2022-08-01'))) %>% 
+  sample_n(5) %>% 
+  select(Comment = comments) %>% 
+  datatable(options = list(dom = 't'))
+
+```

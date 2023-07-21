@@ -1,0 +1,18 @@
+project:
+  type: website
+
+website:
+  title: "HEiDi: Summary of Caller Survey"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Summary
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+editor: source
+
