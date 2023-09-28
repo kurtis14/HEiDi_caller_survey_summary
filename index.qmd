@@ -37,14 +37,14 @@ count_perc <- function(n) { round(100 * (n / sum(n)), 1) }
 
 # Survey Details/Notes
 
-HEiDi callers are emailed a link to the survey along with the information for their encounter. The survey is anonymous, optional, and survey is completed online using HLBC's survey platform.  
+HEiDi callers are emailed a link to the survey along with the information for their encounter. The survey is anonymous, optional, and completed online using HLBC's survey platform.  
 
 Date of first response received: `r min(survey$survey_date)`.  
 Date of most recent response received: `r max(survey$survey_date)`.  
 Total responses received: `r nrow(survey)`.  
 Number of questions in survey: `r length(survey) - n_vars_noq`.  
 
-Note, the survey questions were updated in December 2020, so there are some inconsistencies between the current and old versions. `r round(100 * (nrow(survey %>% filter(survey_version == 'Old-2020')) / nrow(survey)), 1)`% of responses are from the old version.  
+Note, the survey questions were updated in December 2020, so there are some inconsistencies between the current and old versions. `r round(100 * (nrow(survey %>% filter(survey_version == 'Old-2020')) / nrow(survey)), 1)`% of responses are from the old version. The survey was also updated in March 2022.  
 
 ## CAUTION: Interpretation Limitations
 
